@@ -15,6 +15,8 @@ namespace DownloadWatcher
     public partial class Form1 : Form
     {
 
+        public const string AppTitle = "DownloadWatcher";
+
         static string machineName;
         static string userName;
         static string logFileName;
@@ -70,7 +72,7 @@ namespace DownloadWatcher
             //logFileName = machineName + "-" + dt.ToString("yyyyMMdd") + ".log";
             logFileName = dt.ToString("yyyyMMdd") + ".log";
 
-            logPath = Environment.GetEnvironmentVariable("USERPROFILE") + "\\Documents\\DownloadEraser";
+            logPath = Environment.GetEnvironmentVariable("USERPROFILE") + "\\Documents\\" + AppTitle;
             if (!Directory.Exists(logPath))
             {
                 Directory.CreateDirectory(logPath);
@@ -102,26 +104,31 @@ namespace DownloadWatcher
             //監視を開始する
             watcher.EnableRaisingEvents = true;
 
+            WriteLog("started" );
+
+            ShowNotification("常駐開始しました");
+
+            // 最小化,タスクバー非表示
+            this.WindowState = FormWindowState.Minimized;
+            this.ShowInTaskbar = false;
+        }
 
 
-            File.AppendAllText(logFilePath, GetNowTime() + "start\n");
-
-
-            //バルーンヒントの設定
+        //バルーン通知
+        static void ShowNotification(string Msg)
+        {
             //バルーンヒントのタイトル
-            icon.BalloonTipTitle = "お知らせ";
+            icon.BalloonTipTitle = AppTitle;
             //バルーンヒントに表示するメッセージ
-            icon.BalloonTipText = "常駐開始しました";
+            icon.BalloonTipText = Msg;
             //バルーンヒントに表示するアイコン
             icon.BalloonTipIcon = ToolTipIcon.Info;
             //バルーンヒントを表示する
             //表示する時間をミリ秒で指定する
             icon.ShowBalloonTip(10000);
 
-            // 最小化
-            this.WindowState = FormWindowState.Minimized;
-            this.ShowInTaskbar = false;
         }
+
 
 
         static void watcher_Renamed(object source, FileSystemEventArgs e)
@@ -136,20 +143,9 @@ namespace DownloadWatcher
 
                 if (prevDownloadFile != fileName)
                 {
-                    Console.WriteLine("called watcher_Created file=" + fileName);
+                    WriteLog("created " + fileName);
+                    ShowNotification("txt or exeファイルがダウンロードされました");
 
-                    File.AppendAllText(logFilePath, GetNowTime() + "created " + fileName + "\n");
-
-                    //バルーンヒントの設定
-                    //バルーンヒントのタイトル
-                    icon.BalloonTipTitle = "お知らせ";
-                    //バルーンヒントに表示するメッセージ
-                    icon.BalloonTipText = "txtファイルがダウンロードされました";
-                    //バルーンヒントに表示するアイコン
-                    icon.BalloonTipIcon = ToolTipIcon.Info;
-                    //バルーンヒントを表示する
-                    //表示する時間をミリ秒で指定する
-                    icon.ShowBalloonTip(10000);
                 }
             }
             prevDownloadFile = fileName;
@@ -158,6 +154,13 @@ namespace DownloadWatcher
         static void watcher_Error(object source, ErrorEventArgs e)
         {
             Console.WriteLine("called watcher Error");
+        }
+
+        private static void WriteLog(string logMessage)
+        {
+
+            Console.WriteLine(logMessage);
+            File.AppendAllText(logFilePath, GetNowTime() + logMessage + "\n");
         }
 
         // ログファイル用
@@ -172,11 +175,11 @@ namespace DownloadWatcher
         {
             if (e.Reason == SessionEndReasons.Logoff)
             {
-                File.AppendAllText(logFilePath, GetNowTime() + "logoff\n");
+                WriteLog("logoff");
             }
             else if (e.Reason == SessionEndReasons.SystemShutdown)
             {
-                File.AppendAllText(logFilePath, GetNowTime() + "shutdown\n");
+                WriteLog("shutdown");
             }
 
             //監視を終了
@@ -187,7 +190,7 @@ namespace DownloadWatcher
 
         private void Close_Click()
         {
-            File.AppendAllText(logFilePath, GetNowTime() + "exit" + "\n");
+            WriteLog("app exit");
 
             //イベントを解放する
             //フォームDisposeメソッド内の基本クラスのDisposeメソッド呼び出しの前に
