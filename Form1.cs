@@ -38,9 +38,9 @@ namespace DownloadWatcher
         private void setComponents()
         {
             icon = new NotifyIcon();
-            icon.Icon = new Icon("app.ico");
+            icon.Icon = new Icon(Path.GetDirectoryName(Application.ExecutablePath) + @"\app.ico");
             icon.Visible = true;
-            icon.Text = "常駐アプリテスト";
+            icon.Text = "ダウンロード監視";
 
 
             ContextMenuStrip menu = new ContextMenuStrip();
@@ -54,10 +54,13 @@ namespace DownloadWatcher
 
         }
 
-            private void Form1_Load(object sender, EventArgs e)
+        private void Form1_Load(object sender, EventArgs e)
         {
 
             setComponents();
+
+            SetCurrentVersionRun();
+
 
             //イベントをイベントハンドラに関連付ける
             //フォームコンストラクタなどの適当な位置に記述してもよい
@@ -69,6 +72,7 @@ namespace DownloadWatcher
 
             // log file name (Machine-Date.log)
             DateTime dt = DateTime.Now;
+
             //logFileName = machineName + "-" + dt.ToString("yyyyMMdd") + ".log";
             logFileName = dt.ToString("yyyyMMdd") + ".log";
 
@@ -104,7 +108,7 @@ namespace DownloadWatcher
             //監視を開始する
             watcher.EnableRaisingEvents = true;
 
-            WriteLog("started" );
+            WriteLog("started");
 
             ShowNotification("常駐開始しました");
 
@@ -138,13 +142,12 @@ namespace DownloadWatcher
             string fileName;
             fileName = e.Name;
 
-            if (Path.GetExtension(fileName) == ".txt" || Path.GetExtension(fileName) == ".exe")
+            if (Path.GetExtension(fileName) == ".exe")
             {
-
                 if (prevDownloadFile != fileName)
                 {
                     WriteLog("created " + fileName);
-                    ShowNotification("txt or exeファイルがダウンロードされました");
+                    ShowNotification("exeファイルがダウンロードされました");
 
                 }
             }
@@ -201,5 +204,17 @@ namespace DownloadWatcher
             Application.Exit();
 
         }
+        public static void SetCurrentVersionRun()
+        {
+            //Runキーを開く
+            Microsoft.Win32.RegistryKey regkey =
+                Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                @"Software\Microsoft\Windows\CurrentVersion\Run", true);
+            //値の名前に製品名、値のデータに実行ファイルのパスを指定し、書き込む
+            regkey.SetValue(Application.ProductName, Application.ExecutablePath);
+            //閉じる
+            regkey.Close();
+        }
     }
 }
+
